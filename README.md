@@ -116,6 +116,73 @@ export default function Counter() {
 }
 ```
 
+## Now the app will work but you will get an error - 
+```txt
+ hook.js:608 A non-serializable value was detected in an action, in the path: `register`. Value: ƒ register2(key) {
+     _pStore.dispatch({
+      type: REGISTER,
+       key
+     });
+   } 
+```
+- Reason this error occurs if because redux-persist internally dispatches some actions (like REGISTER, REHYDRATE, etc.) which contain non-serializable values (functions like register2). 
+- Redux Toolkit flags them because by default it enforces that all actions & state should be serializable.
+
+- You can also pass the following arg in the store object while calling configureStore.
+
+```js
+ middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }),
+```
+- And import following items from 'redux-persist'
+```js
+import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE } from "redux-persist";
+```
+
+- Here is the complete store.jsx with the above fix.
+```js
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import storage from "redux-persist/lib/storage";
+// import { rootReducer } from "../Reducers/rootReducer";
+import { FLUSH, PAUSE, PERSIST, persistReducer, PURGE, REGISTER, REHYDRATE } from "redux-persist";
+import CounterReducer from "../features/counter/CounterSlice";
+import persistStore from "redux-persist/es/persistStore";
+import autoMergeLevel1 from "redux-persist/lib/stateReconciler/autoMergeLevel1";
+
+const persistConfig = {
+   key: "root",
+   storage,
+   //   whitelist:[],                 // OPTIONAL
+   //   blacklist:[],                 // OPTIONAL
+   //   stateReconciler: autoMergeLevel1,                 // OPTIONAL
+   //   transform:[]                  // OPTIONAL
+};
+
+const rootReducer = combineReducers({
+   // <-- You can either create a file Reducers/rootReducer.jsx ir write it here.
+   counter: CounterReducer,
+});
+
+// create a persisted reducer
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+//create a redux store with the persisted Reducer
+export const Store = configureStore({
+   reducer: persistedReducer,
+   middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+         serializableCheck: {
+            ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+         },
+      }),
+});
+
+export const persistor = persistStore(Store);
+```
 
 
 --------------------------------------------------------------------------------------------------
