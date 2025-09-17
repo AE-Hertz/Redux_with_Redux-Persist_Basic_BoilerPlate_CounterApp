@@ -115,3 +115,10 @@ export default function Counter() {
   );
 }
 ```
+
+
+
+--------------------------------------------------------------------------------------------------
+
+### I am glad to share this basic boilerplate with redux-persist it will help to get started with redux easily and help beginners.
+### As I have faced hurdles to find a basic part to understand, here you go and help yourself by forking and understand codebase.
